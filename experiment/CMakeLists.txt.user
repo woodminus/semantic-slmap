@@ -480,4 +480,10 @@
  </data>
  <data>
   <variable>ProjectExplorer.Project.Updater.EnvironmentId</variable>
-  <value type="QByteArray">{bdc1f4c4-8582-4b
+  <value type="QByteArray">{bdc1f4c4-8582-4b68-afc3-cc95ebe0baeb}</value>
+ </data>
+ <data>
+  <variable>ProjectExplorer.Project.Updater.FileVersion</variable>
+  <value type="int">15</value>
+ </data>
+</qtcreator>
