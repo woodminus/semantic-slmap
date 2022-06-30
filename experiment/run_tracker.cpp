@@ -30,4 +30,38 @@ int main()
     int n = 0;
     while ( RGBDFrame::Ptr frame = frameReader.next() )
     {
-     
+        cout<<"*************************************"<<endl;
+        cout<<"tracking frame "<<frame->id<<endl;
+        boost::timer    timer;
+        Eigen::Isometry3d T = tracker.updateFrame( frame );
+        cout<<BOLDBLUE"current T="<<endl<<T.matrix()<<RESET<<endl;
+        cv::imshow( "image", frame->rgb );
+        if (tracker.getState() == Tracker::LOST)
+        {
+            cout<<"The tracker has lost"<<endl;
+            cv::waitKey(0);
+        }
+        else
+        {
+            cv::waitKey(1);
+        }
+        cout<<"time cost = "<<timer.elapsed()<<endl;
+
+	int x = T(0,3);
+	int y = T(2,3);
+	cout << "x: " << x << " y: " << y << endl;
+
+	// gt_pose
+	n += 1;
+	cv::Mat gtpose;
+	poseReader.getData(n+1, gtpose);
+
+	cv::circle(poseMap, cv::Point(poseMap.cols/2+x, poseMap.rows/2-y), 2, cv::Scalar(255,0,0));  
+	cv::circle(poseMap, cv::Point(poseMap.cols/2+gtpose.ptr<double>(0)[3], poseMap.rows/2-gtpose.ptr<double>(2)[3]), 2, cv::Scalar(0,0,255));  
+	cv::namedWindow("pose", 0);
+	cv::imshow("pose", poseMap);
+	cv::waitKey(1);
+
+    }
+    return 0;
+}
