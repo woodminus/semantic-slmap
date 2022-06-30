@@ -32,4 +32,20 @@ int main()
 
         std::vector<KeyPoint> keypoint1,keypoint2;
         Mat descriptors_1,descriptors_2;
-        
+        Ptr<ORB> orb ;//= ORB::create(500,1.2f,8,31,0,2,ORB::HARRIS_SCORE,31,20);
+
+        orb->detect(refFrame->img_lc,keypoint1);
+        orb->detect(currFrame->img_lc,keypoint2);
+        orb->compute(refFrame->img_lc,keypoint1,descriptors_1);
+        orb->compute(currFrame->img_lc,keypoint2,descriptors_2);
+
+        Mat outimg2;
+        drawKeypoints(refFrame->img_lc,keypoint1,outimg2,Scalar::all(-1),DrawMatchesFlags::DEFAULT);
+        imshow("ORB",outimg2);
+
+        cv::waitKey(3);
+    }
+
+    return 0;
+}
+
