@@ -66,4 +66,59 @@ int main(int argc, char** argv)
          * 输出的容器vector大小为宽*高，代表每个像素点的分类结果输出
          * 而predictions.push_back(std::make_pair(labels_[idx], idx));
          * 上述代码其实并没有将Label与输出的结果idx关联起来，输出还是按照0-11排序
-         * 所以
+         * 所以下面的代码通过Label 的if判断去改变second(idx)实际上没有改变其因素
+         */
+
+        string Predictions_name[360][480];
+        string Predictions_num[360][480];
+        for(int i_1=0;i_1<360;i_1++)
+        {
+            for(int j_1=0;j_1<480;j_1++)
+            {
+                Predictions_name[i_1][j_1]=predictions[i_1*480+j_1].first;
+                Predictions_num[i_1][j_1]=predictions[i_1*480+j_1].second;
+                if(predictions[i_1*480+j_1].first=="Pavement")
+                {
+                    predictions[i_1*480+j_1].second = 4;
+                }
+                else if(predictions[i_1*480+j_1].first=="Road")
+                {
+                    continue;
+                }
+                else
+                {
+                    continue;
+                }
+            }
+        }
+
+//		for(int i_1=0;i_1<360;i_1++)
+//		{
+//			for(int j_1=0;j_1<480;j_1++)
+//			{
+//				if((i_1>=310)&&(j_1>=240))
+//				{
+//					predictions[i_1*480+j_1].second = 4;;
+//				}
+//			}
+//		}
+
+        cv::Mat segnet_fiter(segnet_frame.size(), CV_8UC3, cv::Scalar(0,0,0));
+        for (int i = 0; i < 360; ++i)
+        {
+            uchar* segnet_ptr = segnet_fiter.ptr<uchar>(i);
+            for (int j = 0; j < 480; ++j)
+            {
+                segnet_ptr[j*3+0] = predictions[i*480+j].second;
+                segnet_ptr[j*3+1] = predictions[i*480+j].second;
+                segnet_ptr[j*3+2] = predictions[i*480+j].second;
+            }
+        }
+//		for(int i_1=0;i_1<360;i_1++)
+//		{
+//			for(int j_1=0;j_1<480;j_1++)
+//			{
+//				if((i_1==310)||(j_1==240))
+//				{
+//					segnet_fiter.at<cv::Vec3b>(i_1,j_1)[0]=255;
+//					segnet_fiter.at<cv::Vec3b>(i_1,j_1)[1]=
