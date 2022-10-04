@@ -121,4 +121,56 @@ int main(int argc, char** argv)
 //				if((i_1==310)||(j_1==240))
 //				{
 //					segnet_fiter.at<cv::Vec3b>(i_1,j_1)[0]=255;
-//					segnet_fiter.at<cv::Vec3b>(i_1,j_1)[1]=
+//					segnet_fiter.at<cv::Vec3b>(i_1,j_1)[1]=255;
+//					segnet_fiter.at<cv::Vec3b>(i_1,j_1)[2]=255;
+//				}
+//			}
+//		}
+        //------------------------------------------------------------------------
+
+        cv::Mat segnet(segnet_frame.size(), CV_8UC3, cv::Scalar(0,0,0));
+        for (int i = 0; i < 360; ++i)
+        {
+            uchar* segnet_ptr = segnet.ptr<uchar>(i);
+            for (int j = 0; j < 480; ++j)
+            {
+                segnet_ptr[j*3+0] = predictions[i*480+j].second;
+                segnet_ptr[j*3+1] = predictions[i*480+j].second;
+                segnet_ptr[j*3+2] = predictions[i*480+j].second;
+            }
+        }
+
+        // recover
+        cv::resize(segnet, segnet, copy_frame.size());
+        cv::LUT(segnet, color, segnet);
+        cv::dilate(segnet, segnet, cv::Mat(1,1,CV_8UC1), cv::Point(-1,-1), 2);
+        cv::imshow("segnet", segnet);
+
+        cv::Mat result;
+        cv::addWeighted(segnet, 0.7, copy_frame, 0.7, 0, result);
+        cv::imshow("result", result);
+
+        // Counting time
+        clock_t endtime=clock();
+        std::cout<<"No. "<<i<<" time: "<<(endtime - starttime)/1000<<" ms"<<endl;
+
+        char file_save[256];
+        char file_save1[256];
+
+#if datasetvalue==0
+        sprintf(file_save1, "/home/relaybot/Mu_Link/KittiData/05/segnet_0/%06d.png",i);
+        sprintf(file_save, "/home/relaybot/Mu_Link/KittiData/05/result_0/%06d.png",i);
+#elif datasetvalue==1
+        sprintf(file_save, "../Image_Test/mu/segnet/%04d.png",i);
+#else
+        cout<<"没有定义数据集"<<endl;
+#endif
+
+        cv::imwrite(file_save, result);
+        cv::imwrite(file_save1, segnet);
+        cv::waitKey(1);
+    }
+    return 0;
+}
+
+/*
