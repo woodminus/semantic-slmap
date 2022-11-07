@@ -42,4 +42,56 @@ struct ROI3D
 struct CalibPars
 { 
 
-    CalibPars(
+    CalibPars():f(0.0),c_x(0.0),c_y(0.0),b(0.0){};
+
+    CalibPars(const double _f, const double _cx, const double _cy, const double _base)
+    {
+        f = _f;
+        c_x = _cx;
+        c_y = _cy;
+        b = _base;
+     };
+
+    CalibPars(const cv::Mat& Q)
+    {
+      int type = Q.elemSize1();
+      if(type == 8)
+      {
+        f = Q.at<double>(2,3);
+        c_x = (-1.0)*Q.at<double>(0,3);
+        c_y = (-1.0)*Q.at<double>(1,3);
+        b = (-1.0)/Q.at<double>(3,2);
+      }
+      else
+      {
+        cout<<"Only double type matrix is allowed!"<<endl;
+      }
+             
+    };
+
+
+
+    inline friend ostream &operator <<(ostream &s, CalibPars calib)
+    {
+      s<<"Focal length f: "<<calib.f<<" c_x, c_y: "<<calib.c_x<<" "<<calib.c_y<<" base length: "<<calib.b<<endl;
+      return s;
+    };
+
+    inline CalibPars& operator=(const CalibPars &t)
+    {
+      f = t.f;
+      c_x = t.c_x;
+      c_y = t.c_y;
+      b = t.b;
+      return *this;
+    };
+
+
+    double f;      //focal length
+    double c_x;    //principle position in x,y
+    double c_y;
+    double b;      //base line in mm
+};
+
+
+#endif
