@@ -70,3 +70,41 @@ public: QuadFeatureMatch(){};
         void circularMatching();
 
         //print usage information of features
+        void  printParams( cv::Algorithm* algorithm );
+
+
+private:
+
+
+        //filter out bad tracks
+        void filteringTracks(vector<Point2f>& point_lc, vector<Point2f>& point_rc,
+                            vector<Point2f>& point_lp, vector<Point2f>& point_rp,
+                             vector<Point2f>& point_lp_direct);
+
+        //nearest neighboring feature matching
+        void matching(vector<KeyPoint> &keypoints1, Mat &descriptors1,
+                      vector<KeyPoint> &keypoints2, Mat &descriptors2,
+                      int search_width, int search_height, vector<DMatch>& matches);
+
+        std::vector<pmatch> getMatches() { return quadmatches; }
+
+        //demonstration functions
+        void drawMatchesQuad(int time);
+        void drawMatchesFlow(int time);
+        void drawMatchesSimple(int time);
+
+        bool withinRegion(cv::Point2f& pt, cv::Size& region); //judge if a point is within a certain region
+        void KeyPoint2Point(vector<KeyPoint>& keypoint, vector<Point2f>& pt); //transform from keypoint to point2f
+        float caldistance(const cv::Mat& vec1, const cv::Mat& vec2, bool descriptor_binary); //calculate descriptor difference
+
+public:
+
+        //quadmatches  --- the final output p_match vevtors, will used in visual odometry
+        vector<pmatch> quadmatches;
+
+private:
+
+        /* ======================================================================================
+         * img_lc,img_lp,img_rc,img_rp -- input images in left current, left previous, right current, right previous
+         * keypoint_lc, keypoint_rc, keypoint_lp, keypoint_rp --  cv::KeyPoint vectors
+         * point_lc ... ---- cv::Point2f vectors using f
