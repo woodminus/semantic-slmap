@@ -46,4 +46,23 @@ public:
         {
             rgbd_tutor::Feature feature;
             feature.keypoint = kps[i];
-            feature.descriptor  = desps.row(
+            feature.descriptor  = desps.row(i).clone();
+            feature.position = frame->project2dTo3d( kps[i].pt.x, kps[i].pt.y );
+            frame->features.push_back( feature );
+        }
+    }
+
+    // 匹配两个帧之间的特征描述
+    vector<cv::DMatch>  match( const rgbd_tutor::RGBDFrame::Ptr& frame1, const rgbd_tutor::RGBDFrame::Ptr& frame2 ) const;
+
+protected:
+    shared_ptr<ORB_SLAM2::ORBextractor> extractor;
+    cv::Ptr< cv::DescriptorMatcher > matcher;
+
+    double knn_match_ratio =0.8;
+
+};
+
+}
+
+#endif // ORB_H
