@@ -53,4 +53,46 @@ public:
   // constructor / deconstructor
   Matrix_ ();                                                  // init empty 0x0 Matrix_
   Matrix_ (const int32_t m,const int32_t n);                   // init empty mxn Matrix_
-  Matrix_ (const int32_t m,const int32_t n,const FLOAT* val_); // init mxn Matrix_ with values from array 'va
+  Matrix_ (const int32_t m,const int32_t n,const FLOAT* val_); // init mxn Matrix_ with values from array 'val'
+  Matrix_ (const Matrix_ &M);                                   // creates deepcopy of M
+  ~Matrix_ ();
+
+  // assignment operator, copies contents of M
+  Matrix_& operator= (const Matrix_ &M);
+
+  // copies submatrix of M into array 'val', default values copy whole row/column/Matrix_
+  void getData(FLOAT* val_,int32_t i1=0,int32_t j1=0,int32_t i2=-1,int32_t j2=-1);
+
+  // set or get submatrices of current Matrix_
+  Matrix_ getMat(int32_t i1,int32_t j1,int32_t i2=-1,int32_t j2=-1);
+  void   setMat(const Matrix_ &M,const int32_t i,const int32_t j);
+
+  // set sub-Matrix_ to scalar (default 0), -1 as end replaces whole row/column/Matrix_
+  void setVal(FLOAT s,int32_t i1=0,int32_t j1=0,int32_t i2=-1,int32_t j2=-1);
+
+  // set (part of) diagonal to scalar, -1 as end replaces whole diagonal
+  void setDiag(FLOAT s,int32_t i1=0,int32_t i2=-1);
+
+  // clear Matrix_
+  void zero();
+  
+  // extract columns with given index
+  Matrix_ extractCols (std::vector<int> idx);
+
+  // create identity Matrix_
+  static Matrix_ eye (const int32_t m);
+  void          eye ();
+
+  // create diagonal Matrix_ with nx1 or 1xn Matrix_ M as elements
+  static Matrix_ diag(const Matrix_ &M);
+  
+  // returns the m-by-n Matrix_ whose elements are taken column-wise from M
+  static Matrix_ reshape(const Matrix_ &M,int32_t m,int32_t n);
+
+  // create 3x3 rotation matrices (convention: http://en.wikipedia.org/wiki/Rotation_Matrix_)
+  static Matrix_ rotMatX(const FLOAT &angle);
+  static Matrix_ rotMatY(const FLOAT &angle);
+  static Matrix_ rotMatZ(const FLOAT &angle);
+
+  // simple arithmetic operations
+  Matrix_  opera
