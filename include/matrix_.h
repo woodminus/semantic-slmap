@@ -124,4 +124,10 @@ public:
 
 private:
 
-  void allocateMemory (co
+  void allocateMemory (const int32_t m_,const int32_t n_);
+  void releaseMemory ();
+  inline FLOAT pythag(FLOAT a,FLOAT b);
+
+};
+
+#endif // Matrix__H
