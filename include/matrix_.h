@@ -95,4 +95,33 @@ public:
   static Matrix_ rotMatZ(const FLOAT &angle);
 
   // simple arithmetic operations
-  Matrix_  opera
+  Matrix_  operator+ (const Matrix_ &M); // add Matrix_
+  Matrix_  operator- (const Matrix_ &M); // subtract Matrix_
+  Matrix_  operator* (const Matrix_ &M); // multiply with Matrix_
+  Matrix_  operator* (const FLOAT &s);  // multiply with scalar
+  Matrix_  operator/ (const Matrix_ &M); // divide elementwise by Matrix_ (or vector)
+  Matrix_  operator/ (const FLOAT &s);  // divide by scalar
+  Matrix_  operator- ();                // negative Matrix_
+  Matrix_  operator~ ();                // transpose
+  FLOAT   l2norm ();                   // euclidean norm (vectors) / frobenius norm (matrices)
+  FLOAT   mean ();                     // mean of all elements in Matrix_
+
+  // complex arithmetic operations
+  static Matrix_ cross (const Matrix_ &a, const Matrix_ &b);    // cross product of two vectors
+  static Matrix_ inv (const Matrix_ &M);                       // invert Matrix_ M
+  bool   inv ();                                             // invert this Matrix_
+  FLOAT  det ();                                             // returns determinant of Matrix_
+  bool   solve (const Matrix_ &M,FLOAT eps=1e-20);            // solve linear system M*x=B, replaces *this and M
+  bool   lu(int32_t *idx, FLOAT &d, FLOAT eps=1e-20);        // replace *this by lower upper decomposition
+  void   svd(Matrix_ &U,Matrix_ &W,Matrix_ &V);                 // singular value decomposition *this = U*diag(W)*V^T
+
+  // print Matrix_ to stream
+  friend std::ostream& operator<< (std::ostream& out,const Matrix_& M);
+
+  // direct data access
+  FLOAT   **val;
+  int32_t   m,n;
+
+private:
+
+  void allocateMemory (co
