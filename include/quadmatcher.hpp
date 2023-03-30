@@ -107,4 +107,32 @@ private:
         /* ======================================================================================
          * img_lc,img_lp,img_rc,img_rp -- input images in left current, left previous, right current, right previous
          * keypoint_lc, keypoint_rc, keypoint_lp, keypoint_rp --  cv::KeyPoint vectors
-         * point_lc ... ---- cv::Point2f vectors using f
+         * point_lc ... ---- cv::Point2f vectors using for KLT tracking
+         * descriptor_lc ... --- extracted feature descriptor by SIFT, SURF, ORB...
+         * detector     --- cv::Ptr structure using for detect image feature points
+         * descriptor   --- cv::Ptr structure using for extract feature descriptor
+         * matcher      --- cv::Ptr structure using for matching features
+         * ====================================================================================*/
+         cv::Mat img_lc, img_lp, img_rc, img_rp, img_s_rc, img_s_rp;
+         vector<KeyPoint> keypoint_lc,keypoint_rc,keypoint_lp,keypoint_rp;
+         vector<cv::Point2f> point_lc,point_rc,point_lp,point_rp;
+         cv::Mat descriptor_lc,descriptor_rc,descriptor_lp,descriptor_rp;
+
+         Ptr<cv::FeatureDetector> detector;
+         Ptr<cv::DescriptorExtractor> descriptor;
+         Ptr<cv::DescriptorMatcher> matcher;
+
+
+          /*  ==================================================================================
+           *  mode_track -- indicator of tracking feature points or matching feature points
+           *  descriptor_binary -- indicator of using binary feature descriptor or not
+           *  distance_threshold -- threshold using in feature matching, if bigger than it, not matched
+           *  ===================================================================================*/
+         bool mode_track,descriptor_binary;
+         float distance_threshold;
+
+
+};
+
+#endif
+
