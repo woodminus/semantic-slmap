@@ -102,4 +102,84 @@ public:
         vector<cv::KeyPoint> kps;
         for ( auto f:features )
         {
-           
+            kps.push_back( f.keypoint );
+        }
+        return kps;
+    }
+
+    void setTransform( const Eigen::Isometry3d& T )
+    {
+        std::unique_lock<std::mutex> lck(mutexT);
+        T_f_w = T;
+    }
+    
+    Eigen::Isometry3d getTransform()  
+    {
+        std::unique_lock<std::mutex> lck(mutexT);
+        return T_f_w;
+    }
+};
+
+// FrameReader: 从数据集中顺序读取RGBDFrame
+// 现在支持TUM数据集。
+class FrameReader
+{
+public:
+    enum DATASET
+    {
+        NYUD=0,
+        TUM=1,
+	KITTI=2
+    };
+
+    FrameReader( const rgbd_tutor::ParameterReader& para, const DATASET& dataset_type = KITTI )
+        : parameterReader( para )
+    {
+	// dataset
+        this->dataset_type = dataset_type;
+        switch( dataset_type )
+        {
+		case NYUD:
+		    //TODO: 实现nyud数据读取接口
+		    break;
+		case TUM:
+		    init_tum( para );
+		    break;
+		case KITTI:
+		    init_kitti( para );
+        }
+
+        camera = para.getCamera();
+    }
+
+    RGBDFrame::Ptr   next();
+
+    void    reset()
+    {
+        currentIndex = start_index;
+    }
+
+    // get by index
+    RGBDFrame::Ptr   get( int index )
+    {
+        if (index < 0 || index >= rgbFiles.size() )
+            return nullptr;
+        currentIndex = index;
+        return next();
+    }
+
+protected:
+    void    init_tum( const ParameterReader& para );
+    void    init_kitti( const ParameterReader& para );
+protected:
+    DATASET     dataset_type    =KITTI;
+
+    int currentIndex =0;
+    int start_index  =0;
+    vector<string>  rgbFiles, depthFiles;
+    vector<string> segnet_2,segnet_3;
+    string  dataset_dir;
+    const ParameterReader&  parameterReader;
+    //Classifier classifier;
+
+    CAMERA_INTRINSIC_P
