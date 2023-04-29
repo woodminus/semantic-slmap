@@ -37,4 +37,69 @@ public:
     int id = -1;                //-1表示该帧不存在
     cv::Mat rgb, depth, disparity, semantic, raw_semantic, color;
     cv::Mat result;
-    cv::Mat img_l
+    cv::Mat img_lc, img_lp, img_rc, img_rp;
+    cv::Mat rgb_pre_r, rgb_cur_r, semantic_pre_r, semantic_cur_r;
+    cv::Mat xyz, roi_mask, ground_mask, moving_mask;
+    
+    //从当前帧到世界坐标系的变换
+    Eigen::Isometry3d   T_f_w = Eigen::Isometry3d::Identity();
+    std::mutex   mutexT;
+
+    // 特征
+    vector<Feature>     features;
+
+    // 相机
+    CAMERA_INTRINSIC_PARAMETERS camera;
+
+    // BoW回环
+    DBoW2::BowVector bowVec;
+
+    //  point cloud
+    pcl::PointCloud<pcl::PointXYZRGBA>::Ptr	pointcloud =nullptr;
+
+public:
+    // 方法
+    // 将2d像素点投影到本地3d坐标
+    cv::Point3f project2dTo3d( int u, int v  ) const
+    {
+        if (depth.data == nullptr)
+            return cv::Point3f(0,0,0);
+        ushort d = depth.ptr<ushort>(v)[u];
+        if (d == 0)
+            return cv::Point3f(0,0,0);
+        cv::Point3f p;
+        p.z = double( d ) / camera.scale;
+        p.x = ( u - camera.cx) * p.z / camera.fx;
+        p.y = ( v - camera.cy) * p.z / camera.fy;
+        return p;
+    }
+
+    // 将一组descriptor转换为一个矩阵
+    cv::Mat getAllDescriptors ( ) const
+    {
+        cv::Mat desp;
+        for ( size_t i=0; i<features.size(); i++ )
+        {
+            desp.push_back( features[i].descriptor );
+        }
+        return desp;
+    }
+
+    // 获取所有的descriptor并组成一个向量
+    vector<cv::Mat> getAllDescriptorsVec() const
+    {
+        vector<cv::Mat> desp;
+        for ( auto f:features )
+        {
+            desp.push_back( f.descriptor );
+        }
+        return desp;
+    }
+
+    // 获取所有的keypoints
+    vector<cv::KeyPoint>    getAllKeypoints() const
+    {
+        vector<cv::KeyPoint> kps;
+        for ( auto f:features )
+        {
+           
