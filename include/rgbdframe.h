@@ -182,4 +182,8 @@ protected:
     const ParameterReader&  parameterReader;
     //Classifier classifier;
 
-    CAMERA_INTRINSIC_P
+    CAMERA_INTRINSIC_PARAMETERS     camera;
+};
+
+};
+#endif // FRAME_H

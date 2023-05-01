@@ -1,0 +1,68 @@
+#ifndef FRAME_H
+#define FRAME_H
+
+#include "segnet.h"
+#include "common_headers.h"
+#include "parameter_reader.h"
+#include "feature.h"
+#include "utils.h"
+
+#include"Thirdparty/DBoW2/DBoW2/FORB.h"
+#include"Thirdparty/DBoW2/DBoW2/TemplatedVocabulary.h"
+
+#include <pcl/common/transforms.h>
+#include <pcl/point_types.h>
+#include <mutex>
+
+/**
+ * RGBDFrame 
+ * 该类记录了每个帧的信息。帧是slam的基本单位。
+ * 本身可以看作一个struct。
+ * 由于Pose可能被若干线程同时访问，需要加锁。
+ */
+
+namespace rgbd_tutor{
+
+class RGBDFrame //帧
+{
+public:
+    RGBDFrame()
+    { 
+        color = cv::imread("/home/relaybot/Desktop/slam3d/models/color.png", 1);
+    }
+
+    typedef shared_ptr<RGBDFrame> Ptr;//智能指针  命名空间std  C++标准库
+
+    // 数据成员
+    int id = -1;                //-1表示该帧不存在
+    cv::Mat rgb, depth, disparity, semantic, raw_semantic, color;
+    cv::Mat img_lc, img_lp, img_rc, img_rp;
+    cv::Mat rgb_pre_r, rgb_cur_r, semantic_pre_r, semantic_cur_r;
+    cv::Mat xyz, roi_mask, ground_mask, moving_mask;
+    
+    //从当前帧到世界坐标系的变换
+    Eigen::Isometry3d   T_f_w = Eigen::Isometry3d::Identity();
+    std::mutex   mutexT;
+
+    // 特征
+    vector<Feature>     features;
+
+    // 相机
+    CAMERA_INTRINSIC_PARAMETERS camera;
+
+    // BoW回环
+    DBoW2::BowVector bowVec;
+
+    //  point cloud
+    pcl::PointCloud<pcl::PointXYZRGBA>::Ptr	pointcloud =nullptr;
+
+public:
+    // 方法
+    // 将2d像素点投影到本地3d坐标
+    cv::Point3f project2dTo3d( int u, int v  ) const
+    {
+        if (depth.data == nullptr)
+            return cv::Point3f(0,0,0);
+        ushort d = depth.ptr<ushort>(v)[u];
+        if (d == 0)
+            return cv::Point3f(0,0,0)
