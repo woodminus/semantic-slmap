@@ -142,4 +142,46 @@ public:
 		    //TODO: 实现nyud数据读取接口
 		    break;
 		case TUM:
-	
+		    init_tum( para );
+		    break;
+		case KITTI:
+		    init_kitti( para );
+        }
+
+        camera = para.getCamera();
+    }
+
+    RGBDFrame::Ptr   next();
+
+    void    reset()
+    {
+        currentIndex = start_index;
+    }
+
+    // get by index
+    RGBDFrame::Ptr   get( int index )
+    {
+        if (index < 0 || index >= rgbFiles.size() )
+            return nullptr;
+        currentIndex = index;
+        return next();
+    }
+
+protected:
+    void    init_tum( const ParameterReader& para );
+    void    init_kitti( const ParameterReader& para );
+protected:
+    DATASET     dataset_type    =KITTI;
+
+    int currentIndex =0;
+    int start_index  =0;
+    vector<string>  rgbFiles, depthFiles;
+    string  dataset_dir;
+    const ParameterReader&  parameterReader;
+    Classifier classifier;
+
+    CAMERA_INTRINSIC_PARAMETERS     camera;
+};
+
+};
+#endif // FRAME_H
