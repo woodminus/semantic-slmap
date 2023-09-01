@@ -53,4 +53,52 @@ class UVDisparity
     }
     inline void SetUSegmentPars(int min_intense, int min_disparity_raw, int min_area)
     {
-       
+        this->u_segment_par_.min_intense = min_intense;
+        this->u_segment_par_.min_disparity_raw = min_disparity_raw;
+        this->u_segment_par_.min_area = min_area;
+    }
+    inline void SetOutThreshold(double out_th)
+    {
+        out_th_ = out_th;
+    }  // set outlier threshold
+
+    inline void SetInlierTolerance(int inlier_tolerance)
+    {
+        inlier_tolerance_ = inlier_tolerance;
+    } //set inlier tolerance
+
+    inline void SetMinAdjustIntense(int min_adjust_intense)
+    {
+        min_adjust_intense_= min_adjust_intense;
+    } //set minimum adjust intensity for segmentation
+
+
+
+    /**UV disparity segmentation:
+    return value: the segmentation result
+    **/
+   cv:: Mat Process(cv::Mat& img_L, cv::Mat& disp_sgbm,           //input image and disparity map
+                    VisualOdometryStereo& vo,     //input visual odoemtry(inlier&outlier),motion
+                    cv::Mat& xyz, cv::Mat& roi_mask, Mat &ground_mask,
+                    double& pitch1, double& pitch2);
+private:
+
+
+    /*** Calculate U-disparity image***/
+    void calUDisparity(const cv::Mat& img_dis, Mat& xyz, Mat &roi_mask, Mat &ground_mask);
+
+    /**Calculate V-disparity image**/
+    void calVDisparity(const cv::Mat& img_dis, Mat & xyz);
+
+    /**
+     *Estimate the pitch angle from V disparity map
+     *Remove ground plane the points outside the ROI3D
+    **/
+    vector<cv::Mat> Pitch_Classify(cv::Mat& xyz, Mat &ground_mask);
+
+    //filtering the matched feature points by ego-motion
+    void filterInOut(const cv::Mat& img_L, const cv::Mat& roi_mask, const Mat &sgbm_roi,
+                     VisualOdometryStereo& vo, const double pitch_);
+
+    //find all the candidates
+    
