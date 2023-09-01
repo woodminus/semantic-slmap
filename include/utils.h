@@ -13,4 +13,15 @@ namespace rgbd_tutor
 	    double d0=0, d1=0, d2=0, d3=0, d4=0;
 	};
 
-	inline double norm_translate( const Eigen
+	inline double norm_translate( const Eigen::Isometry3d& T )
+	{
+	    return sqrt( T(0,3)*T(0,3) + T(1,3)*T(1,3) + T(2,3)*T(2,3) );
+	}
+
+	inline double norm_rotate( const Eigen::Isometry3d& T )
+	{
+	    return acos( 0.5*(T(0,0)+T(1,1)+T(2,2) - 1) );
+	}
+}
+
+#endif // UTILS_H
