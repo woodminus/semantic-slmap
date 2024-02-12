@@ -138,4 +138,11 @@ private:
     vector< vector<cv::Mat> > candidates_;
     USegmentPars u_segment_par_;        //Disparity segmentation parameters
 
-    vector<cv::Mat> masks_;            // prelimina
+    vector<cv::Mat> masks_;            // preliminary masks_ for the moving object
+
+    cv::Mat u_dis_int,u_dis_,u_dis_show;            // u_dis_int is the original u-disparity map
+    cv::Mat v_dis_int,v_dis_,v_dis_show;            // v_dis_int is the original v-disparity map
+    vector<cv::Mat> masks_confirmed_;
+};
+
+#endif
