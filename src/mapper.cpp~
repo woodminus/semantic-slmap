@@ -46,4 +46,54 @@ Mapper::PointCloud::Ptr Mapper::generatePointCloud( const RGBDFrame::Ptr &frame 
                         //(p.b==128 && p.g==64 && p.r==128) || // road
                         //(p.b==222 && p.g==40 && p.r==60) || // sidewalk
                         //(p.b==0 && p.g==128 && p.r==128) || // vegetable
-                  
+                        (p.b==128 && p.g==128 && p.r==192) || // sign
+                        (p.b==128 && p.g==64 && p.r==64) || // fence
+                        //(p.b==128 && p.g==0 && p.r==64) // car
+                        (p.b==0 && p.g==64 && p.r==64) || // pedestrian
+                        (p.b==192 && p.g==128 && p.r==0) //cyclist
+                    ) continue;
+
+                p.x = p_cv.x;
+                p.y = p_cv.y;
+                p.z = p_cv.z;
+
+                frame->pointcloud->points.push_back( p );
+            }
+        }
+    }
+
+    //Eigen::Isometry3d T = frame->getTransform().inverse();
+    Eigen::Isometry3d T = frame->getTransform();
+    pcl::transformPointCloud( *frame->pointcloud, *tmp, T.matrix());
+    tmp->is_dense = false;
+    return tmp;
+}
+
+void Mapper::viewer()
+{
+    pcl::visualization::CloudViewer viewer("viewer");
+    PointCloud::Ptr globalMap (new PointCloud);
+ 
+    pcl::VoxelGrid<PointT>	voxel;
+    voxel.setLeafSize( resolution, resolution, resolution );
+
+    while (shutdownFlag == false)
+    {
+        boost::timer timer;
+
+        static int cntGlobalUpdate = 0;
+        if ( poseGraph.keyframes.size() <= this->keyframe_size )
+        {
+            usleep(1000);
+            continue;
+        }
+        // keyframe is updated
+        PointCloud::Ptr	tmp(new PointCloud());
+        if (cntGlobalUpdate % 15 == 0)
+        {
+            // update all frames
+            cout<<"redrawing frames"<<endl;
+            globalMap->clear();
+            for ( int i=0; i<poseGraph.keyframes.size(); i+=2 )
+            {
+                PointCloud::Ptr cloud = this->generatePointCloud(po
