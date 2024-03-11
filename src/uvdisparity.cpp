@@ -42,4 +42,63 @@ USegmentPars::USegmentPars(int min_intense_, int min_disparity_raw_, int min_are
      pitch2_KF = new KalmanFilter(2,1,0);
      pitch2_KF->transitionMatrix = *(Mat_<float>(2, 2) << 1,0,0,1);
      cv::setIdentity(pitch2_KF->measurementMatrix);
-     cv::setIdentity(pitch2_KF->proc
+     cv::setIdentity(pitch2_KF->processNoiseCov, Scalar::all(0.000005));
+     cv::setIdentity(pitch2_KF->measurementNoiseCov, Scalar::all(0.001));
+     cv::setIdentity(pitch2_KF->errorCovPost, Scalar::all(1));
+
+     pitch1_measure.create(1,1,CV_32F);
+     pitch2_measure.create(1,1,CV_32F);
+
+
+ }
+
+ //deconstructor
+ UVDisparity::~UVDisparity()
+ {
+     delete pitch1_KF,pitch2_KF;
+ }
+
+
+ /*Since the reconstructed 3D points sometimes not correspond the
+  *triangulated coordinates (the reason is disparity map is smoothed
+  *while the disparity between two matched points is not smoothed),
+  *we re-calculate the 3D position, and filter out the inliers outsid
+  *e the ROI
+*/
+void UVDisparity::filterInOut(const Mat &image, const Mat &roi_mask,const Mat &sgbm_roi,
+                              VisualOdometryStereo& vo, const double pitch)
+{
+  /*calibration parameters*/
+  double f = calib_.f;
+  double cu = calib_.c_x;
+  double cv = calib_.c_y;
+  double base = calib_.b;
+
+  double cos_p = cos(pitch);
+  double sin_p = sin(pitch);
+  int threshold = -3000;
+
+  cv::Mat motion1 = vo.getMotion();
+  cv::Mat show_in,show_out,xyz0,xyz1;
+  
+  cvtColor(image, show_in, CV_GRAY2BGR);
+  cvtColor(image, show_out, CV_GRAY2BGR);
+
+  vector<pmatch>::iterator it_in = vo.quadmatches_inlier.begin();
+  //cout<<"the inliers: "<<vo.quadmatches_inlier.size()<<endl;
+
+
+  for(; it_in!=vo.quadmatches_inlier.end(); )
+  {
+    /*current feature point position*/
+    int uc = (*it_in).u1c;
+    int vc = (*it_in).v1c;
+  
+    /*previous feature point position*/
+    int up = (*it_in).u1p;
+    int vp = (*it_in).v1p;
+  
+    if(roi_mask.at<uchar>(vc,uc) > 0)
+    {
+      double d = max(uc - (*it_in).u2c, 1.0f);
+      double yc = (vc - cv)*b
