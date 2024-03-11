@@ -77,4 +77,47 @@ void triangulate10D(const cv::Mat& img, const cv::Mat& disp, cv::Mat& xyz,
             short d = disp_ptr[j];
             double pw = b/(1.0*static_cast<double>(d));
             px = ((static_cast<double>(j) -cx)*pw)*16.0f;
-          
+            py = ((static_cast<double>(i) -cy)*pw)*16.0f;
+            pz = (f*pw)*16.0f;
+
+            if (fabs(d-minDisparity) <= FLT_EPSILON )
+            {
+                px = 1.0/0.0;
+                py = 1.0/0.0;
+                pz = 1.0/0.0;
+            }
+
+            if (fabs(px)>x_max || fabs(pz)>z_max || fabs(py)>y_max) //outside the ROI
+            {
+                dptr[j*10]     = (float)px; //X
+                dptr[j*10 + 1] = (float)py; //Y
+                dptr[j*10 + 2] = (float)pz; //Z
+                dptr[j*10 + 3] = (float)j;  //u
+                dptr[j*10 + 4] = (float)i;  //v
+                dptr[j*10 + 5] = (float)d/16.0f; //disparity
+                dptr[j*10 + 6] = (int)intensity; //intensity
+                dptr[j*10 + 7] = 0;        //I_u
+                dptr[j*10 + 8] = 0;        //I_v
+                dptr[j*10 + 9] = 0;        //motion mark
+            }
+            else //in the ROI
+            {
+                dptr[j*10]     = (float)px;      //X
+                dptr[j*10 + 1] = (float)py;      //Y
+                dptr[j*10 + 2] = (float)pz;      //Z
+                dptr[j*10 + 3] = (float)j;       //u
+                dptr[j*10 + 4] = (float)i;       //v
+                dptr[j*10 + 5] = (float)d/16.0f; //disparity
+                dptr[j*10 + 6] = (int)intensity; //intensity
+                dptr[j*10 + 7] = 0;           //I_u
+                dptr[j*10 + 8] = 0;           //I_v
+                dptr[j*10 + 9] = 0;           //motion mark
+            }
+        }
+    }
+}
+
+
+
+/*
+******this function rectify the coordinates of the 3D point cloud by the estimated pitch an
