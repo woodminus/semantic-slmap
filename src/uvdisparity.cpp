@@ -101,4 +101,58 @@ void UVDisparity::filterInOut(const Mat &image, const Mat &roi_mask,const Mat &s
     if(roi_mask.at<uchar>(vc,uc) > 0)
     {
       double d = max(uc - (*it_in).u2c, 1.0f);
-      double yc = (vc - cv)*b
+      double yc = (vc - cv)*base/d;
+      double zc = f*base/d;
+
+      yc = cos_p * yc + sin_p * zc;
+  
+       if(true)
+      {
+        cv::circle(show_in, cv::Point(uc,vc),2,cv::Scalar(0,0,255),2,8,0);
+        cv::circle(show_in, cv::Point(up,vp),2,cv::Scalar(0,0,255),2,8,0);
+        cv::line(show_in,  cv::Point(up,vp),  cv::Point(uc,vc), cv::Scalar(0,255,0),1,8,0);
+
+        (*it_in).dis_c = sgbm_roi.at<short>(vc,uc);
+
+        it_in++;
+      }
+       else
+       {
+         it_in = vo.quadmatches_inlier.erase(it_in);
+       }
+       
+    }
+    else
+    {
+      it_in = vo.quadmatches_inlier.erase(it_in);
+    }
+  }
+  //cout<<"After the filter process, the number of inlier is: "<<vo.p_matched_inlier.size()<<endl;
+  vector<pmatch>::iterator it_out = vo.quadmatches_outlier.begin();
+ // cout<<"before the filter process, the number of outlier is: "<<vo.p_matched_outlier.size()<<endl;
+  for(; it_out!=vo.quadmatches_outlier.end(); )
+  {
+    
+    int uc = (*it_out).u1c;
+    int vc = (*it_out).v1c;
+    //int vc2 = (*it).v2c;
+
+    int up = (*it_out).u1p;
+    int vp = (*it_out).v1p;
+      
+    if(roi_mask.at<uchar>(vc,uc) > 0)
+    {
+      double d = max(uc - (*it_out).u2c, 1.0f);            
+      double xc = (uc - cu)*base/d;
+      double yc = (vc - cv)*base/d;
+      double zc = f*base/d;
+      
+      yc = cos_p * yc + sin_p * zc;
+      zc = cos_p * zc - sin_p * yc;
+            
+      if(xc > threshold)
+      {
+        cv::circle(show_in, cv::Point(uc,vc),2,cv::Scalar(255,0,0),2,8,0);
+        cv::circle(show_in, cv::Point(up,vp),2,cv::Scalar(255,0,0),2,8,0);
+        cv::line(show_in,  cv::Point(up,vp),  cv::Point(uc,vc), cv::Scalar(0,255,0),1,8,0);
+    
