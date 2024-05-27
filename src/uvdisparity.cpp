@@ -155,4 +155,76 @@ void UVDisparity::filterInOut(const Mat &image, const Mat &roi_mask,const Mat &s
         cv::circle(show_in, cv::Point(uc,vc),2,cv::Scalar(255,0,0),2,8,0);
         cv::circle(show_in, cv::Point(up,vp),2,cv::Scalar(255,0,0),2,8,0);
         cv::line(show_in,  cv::Point(up,vp),  cv::Point(uc,vc), cv::Scalar(0,255,0),1,8,0);
+        (*it_out).dis_c = sgbm_roi.at<short>(vc,uc);
+
+        it_out++;
+      }
+      else
+      {
+        it_out = vo.quadmatches_outlier.erase(it_out);
+      }
+      
+    }
+
+    else
+    {
+      it_out = vo.quadmatches_outlier.erase(it_out);
+    }
     
+  }
+  
+  /* show the inliers and outliers in one picture */
+  if(true)
+  {
+     //cv::imshow("show_in",show_in);
+     //cv::waitKey(0);
+
+  }
+
+  if(false)
+  {
+      cv::imshow("show_in",show_in);
+      cv::waitKey(0);
+  }
+
+}
+
+
+
+
+void UVDisparity::calUDisparity(const cv::Mat& img_dis, cv::Mat& xyz,cv::Mat& roi_mask,cv::Mat& ground_mask)
+{
+  double max_dis = 0.0;
+  cv::minMaxIdx (img_dis,NULL,&max_dis,NULL,NULL);
+  max_dis = max_dis/16;//the stereosgbm algorithm amplifies the real disparity value by 16
+      
+  int d_cols = img_dis.cols;int d_rows = img_dis.rows;
+  int u_rows = cvCeil(max_dis)+1;int u_cols = img_dis.cols;
+    
+  //allocate the memory for v-disparity map and initialize it as all zeros
+  u_dis_int = Mat::zeros(u_rows, u_cols, CV_32SC1);
+
+    for(int i = 0;i<d_rows;i++)
+    {
+      //const uchar* gray_ptr = img_rgb.ptr<uchar>(i);
+      const short* disp_ptr = img_dis.ptr<short>(i);
+ 
+      for(int j = 0; j<d_cols; j++)
+      {
+        short d = disp_ptr[j];
+
+        if(!cvIsInf(d) && !cvIsNaN(d) && d > 0)
+        {
+          int dis = cvRound(d/16);
+          //set value for the udisparity map
+          int* udis_ptr = u_dis_int.ptr<int>(dis);
+
+          if(roi_mask.at<uchar>(i,j) > 0 && ground_mask.at<uchar>(i,j) > 0 && dis > 0)
+          {
+             udis_ptr[j]++;
+          }
+
+        }
+        
+      }
+        
