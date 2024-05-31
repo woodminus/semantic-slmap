@@ -356,4 +356,84 @@ void UVDisparity::calVDisparity(const cv::Mat& img_dis,cv::Mat& xyz)
            }
            else
            {
-          
+             xyz_ptr[10*i+8] = 0;
+           }
+
+      }
+  }
+
+
+}
+
+vector<cv::Mat> UVDisparity::Pitch_Classify(cv::Mat &xyz,cv::Mat& ground_mask)
+{
+   vector<cv::Mat> pitch_measure;
+
+   cv::Mat pitch1;
+   pitch1.create(1,1,CV_32F);
+   cv::Mat pitch2;
+   pitch2.create(1,1,CV_32F);
+
+   cv::Mat bin,dst,dst1;
+
+  GaussianBlur(v_dis_,dst,Size(3,3),0,0);
+
+  Mat element = getStructuringElement(MORPH_RECT,Size(3,3),Point(1,1));
+  erode(dst,dst1,element);
+
+  cv::threshold(dst1,bin,0,255,THRESH_OTSU);
+
+  //cv::imshow("color",bin);
+  //cv::waitKey(0);
+    
+  std::vector<Point> pt_list;
+  //select the points to estimate line function
+  for(int i = 26;i < bin.cols;i++)
+  {
+    for(int j = bin.rows-1;j>=0;j--)
+    {
+      int v = bin.at<uchar>(j,i);
+      if(v == 255)
+      {
+        //cout<<"the lowest pixel is: "<<i<<","<<j<<endl;
+        pt_list.push_back(cv::Point(i,j));
+
+        for(int k = j; k > max(j-30,0); k--)
+        {
+            int v_a = bin.at<uchar>(k,i);
+            if(v_a == 255)
+            {
+                pt_list.push_back(cv::Point(i,k));
+
+            }
+        }
+        
+        break;
+      }
+    }
+  }
+
+  std::vector<Point> pt_list2;
+  //select the points to estimate line function
+  for(int i = 12;i < 26;i++)
+  {
+    for(int j = bin.rows-1;j>=0;j--)
+    {
+      int v = bin.at<uchar>(j,i);
+      if(v == 255)
+      {
+        pt_list2.push_back(cv::Point(i,j));
+        break;
+      }
+    }
+  }
+
+  //cout<<"length of list is: "<<pt_list.size()<<endl;
+  Vec4f line1;
+  Vec4f line2;
+
+
+  //fitting line function
+  cv::fitLine(pt_list,line1,CV_DIST_L2,0,0.01,0.01);
+  cv::fitLine(pt_list,line2,CV_DIST_L2,0,0.01,0.01);
+  //cv::fi
