@@ -289,4 +289,71 @@ void UVDisparity::calVDisparity(const cv::Mat& img_dis,cv::Mat& xyz)
   int v_rows = img_dis.rows;
 
    
-  //allocate the memory for v-disparity map and initialize it as all ze
+  //allocate the memory for v-disparity map and initialize it as all zeros
+   v_dis_int = Mat::zeros(v_rows, v_cols, CV_32SC1);
+
+  for(int i = 0;i<d_rows;i++)
+    {
+      //const uchar* gray_ptr = img_rgb.ptr<uchar>(i);
+      const short* disp_ptr = img_dis.ptr<short>(i);
+      int* vdis_ptr = v_dis_int.ptr<int>(i);
+ 
+      for(int j = 0; j<d_cols; j++)
+      {
+        short d = disp_ptr[j];
+
+        if(!cvIsInf(d) && !cvIsNaN(d) && d > 0)
+        {
+          int dis = cvRound(d/16.0f);
+          int id = max(0,min(v_cols,dis));
+
+          vdis_ptr[id]++;
+        }
+      }
+    }
+
+
+  int xyz_cols = xyz.cols;
+  int xyz_rows = xyz.rows;
+
+  float scale = 255*1.0f/xyz.cols;
+
+  //assign the int matrix to uchar matrix for visualize
+  v_dis_.create(v_dis_int.size(),CV_8UC1);
+  for(int i = 0;i < v_rows;i++)
+  {
+      //const uchar* gray_ptr = img_rgb.ptr<uchar>(i);
+      const int* v_ptr = v_dis_int.ptr<int>(i);
+      uchar* v_char_ptr = v_dis_.ptr<uchar>(i);
+
+      for(int j = 0; j < v_cols; j++)
+      {
+          int v = v_ptr[j];
+          v_char_ptr[j] = v*scale;
+      }
+    }
+
+  //assign for visualize
+  cvtColor(v_dis_, v_dis_show, CV_GRAY2BGR);
+
+//  cv::imshow("v_dis",v_dis_uchar);
+//  cv::waitKey(0);
+
+  //assign to xyz 10D matrix
+  for(int j = 0; j < xyz_rows; j++)
+  {
+      float* xyz_ptr = xyz.ptr<float>(j);
+      for(int i = 0;i < xyz_cols; i++)
+      {
+
+           int v = cvRound(xyz_ptr[10*i+4]);
+           int d = cvRound(xyz_ptr[10*i+5]);
+
+           if(d>0)
+           {
+             int v_i = v_dis_.at<int>(v,d);
+             xyz_ptr[10*i+8] = (float)v_i;
+           }
+           else
+           {
+          
