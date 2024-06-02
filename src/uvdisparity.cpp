@@ -486,3 +486,67 @@ vector<cv::Mat> UVDisparity::Pitch_Classify(cv::Mat &xyz,cv::Mat& ground_mask)
                {
                    xyz_ptr[10*i+9] = 0.0f;//make the intensity as zero
                }
+               else
+               {
+                   xyz_ptr[10*i+9] = abs(intensity);
+               }
+           }
+           else if(d < 26.1f && d > 8.0f)
+           {
+               if(distance > -14.0f)
+               {
+                   xyz_ptr[10*i+9] = 0.0f;//make the intensity as zero
+               }
+               else
+               {
+                   xyz_ptr[10*i+9] = abs(intensity);
+               }
+           }
+           else
+           {
+               xyz_ptr[10*i+9] = 0;//make the intensity as zero
+           }
+
+      }
+
+
+  }
+
+
+  vector<Mat> channels(8);
+//  split img:
+  split(xyz, channels);
+//  get the channels (dont forget they follow BGR order in OpenCV)
+  cv::Mat ch9 = channels[9];
+  ground_mask.create(ch9.size(),CV_8UC1);
+  cv::convertScaleAbs(ch9,ground_mask);
+
+  pitch_measure.push_back(pitch1);
+  pitch_measure.push_back(pitch2);
+
+  return pitch_measure;
+ }
+
+
+/* Find all the possible moving segmentation by projecting
+ *outliers into u-disparity map
+*/
+void UVDisparity::findAllMasks(const VisualOdometryStereo &vo, const Mat &img_L, cv::Mat& xyz, cv::Mat& roi_mask)
+{
+    
+  cv::Mat img_show;
+  cvtColor(img_L, img_show, CV_GRAY2BGR);
+  cv::Mat ushow;
+  cvtColor(u_dis_, ushow, CV_GRAY2BGR);
+  
+  cv::Scalar newVal(255);
+  
+  int numOutlier =  vo.quadmatches_outlier.size();
+
+  //parameters for segmentation
+  int min_intense = this->u_segment_par_.min_intense;// the lowest threshold of intensity in u-disparity
+  int min_disparity_raw = this->u_segment_par_.min_disparity_raw;
+  int min_area = this->u_segment_par_.min_area;
+
+  //find all possible masks_
+  for(in
