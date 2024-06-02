@@ -549,4 +549,65 @@ void UVDisparity::findAllMasks(const VisualOdometryStereo &vo, const Mat &img_L,
   int min_area = this->u_segment_par_.min_area;
 
   //find all possible masks_
-  for(in
+  for(int i = 0; i< numOutlier; i++)
+  {
+    int u = vo.quadmatches_outlier[i].u1c;
+    short d = vo.quadmatches_outlier[i].dis_c;
+
+    if(d > min_disparity_raw)
+    {
+       int dis = cvRound(d/16.0f);
+       int utense = u_dis_.at<uchar>(dis,u);
+
+       cv::circle(ushow, cv::Point(u,dis),2,cv::Scalar(255,0,0),2,8,0);
+
+       if(utense > min_intense)
+        {
+          cv::Point seed(u,dis);
+          cv::Rect ccomp;
+          cv::Scalar low;
+          cv::Scalar up(255-utense);
+         //make the low and up difference
+          if(0.5*utense > min_intense)
+          {
+            low = cv::Scalar(0.5*utense);
+          }
+          else
+          {
+            low = cv::Scalar(abs(utense - min_intense));
+          }
+          
+          cv::Mat mask1,mask2;
+          mask1.create(u_dis_.rows+2, u_dis_.cols+2,CV_8UC1);
+          mask1 = Scalar::all(0);
+          
+          int newMaskVal = 255;
+          Scalar newVal = Scalar( 120, 120, 120 );
+          int connectivity = 8;
+
+          int flags = connectivity + (newMaskVal << 8 ) +FLOODFILL_FIXED_RANGE + FLOODFILL_MASK_ONLY;
+          
+          int area = floodFill(u_dis_,mask1,seed,newVal,&ccomp,low,up,flags);
+          
+          mask2 = mask1( Range(1, mask1.rows-1 ), Range(1, mask1.cols-1) );
+          
+          if(area > min_area)
+          {
+            masks_.push_back(mask2);
+          }
+        }
+        
+    }
+  }
+
+  int numInlier =  vo.quadmatches_inlier.size();
+
+  //find all possible masks_
+  for(int i = 0; i< numInlier; i++)
+  {
+    int u = vo.quadmatches_inlier[i].u1c;
+    short d = vo.quadmatches_inlier[i].dis_c;
+
+    if(d > min_disparity_raw)
+    {
+       int dis = cvRound
