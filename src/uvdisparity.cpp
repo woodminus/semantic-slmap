@@ -436,4 +436,53 @@ vector<cv::Mat> UVDisparity::Pitch_Classify(cv::Mat &xyz,cv::Mat& ground_mask)
   //fitting line function
   cv::fitLine(pt_list,line1,CV_DIST_L2,0,0.01,0.01);
   cv::fitLine(pt_list,line2,CV_DIST_L2,0,0.01,0.01);
-  //cv::fi
+  //cv::fitLine(pt_list2,line2,CV_DIST_L2,0,0.01,0.01);
+
+  float a = line1[0];float b = line1[1];
+  int x0 = cvRound(line1[2]);int y0 = cvRound(line1[3]);
+
+  float a2 = line2[0];float b2 = line2[1];
+  int x2 = cvRound(line2[2]);int y2 = cvRound(line2[3]);
+
+  double V_C = y0 - (b/a)*x0;
+  double V_C2 = y2 - (b2/a2)*x2;
+
+
+  vector<Vec4i> lines;
+  double V_0 = calib_.c_y;
+  double F = calib_.f;
+
+  double theta = atan((V_0-V_C)/F);
+  double theta2 = atan((V_0-V_C2)/F);
+
+  cv::line(v_dis_show,cv::Point(0,(b2/a2)*0+V_C2),cv::Point(26,(b2/a2)*26+V_C2),cv::Scalar(0,255,0),2,8);
+  cv::line(v_dis_show,cv::Point(0,(b2/a2)*0+V_C2-20),cv::Point(26,(b2/a2)*26+V_C2-20),cv::Scalar(0,0,255),2,8);
+
+  cv::line(v_dis_show,cv::Point(26,(b/a)*26+V_C),cv::Point(100,(b/a)*100+V_C),cv::Scalar(255,0,0),2,8);
+  cv::line(v_dis_show,cv::Point(26,(b/a)*26+V_C-20),cv::Point(100,(b/a)*100+V_C-20),cv::Scalar(0,0,255),2,8);
+
+  pitch1.at<float>(0)=theta;
+  pitch2.at<float>(0)=theta2;
+
+  //classify the points on ground plane and obstacles with respect to its distance to the line in V-disparity
+ int xyz_cols = xyz.cols;
+ int xyz_rows = xyz.rows;
+
+  for(int j = 0; j < xyz_rows; j++)
+  {
+
+      float* xyz_ptr = xyz.ptr<float>(j);
+      for(int i = 0;i < xyz_cols; i++)
+      {
+
+           float v = xyz_ptr[10*i + 4];
+           float d = xyz_ptr[10*i + 5];
+           int intensity = cvRound(xyz_ptr[10*i + 6]);
+           float distance = (v-(b/a)*d-V_C);
+
+           if(d > 26.0f)
+           {
+               if(distance > -14.0f)
+               {
+                   xyz_ptr[10*i+9] = 0.0f;//make the intensity as zero
+               }
