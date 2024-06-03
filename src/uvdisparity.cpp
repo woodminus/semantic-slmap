@@ -684,4 +684,83 @@ void UVDisparity::verifyByInliers(const VisualOdometryStereo& vo, const cv::Mat&
 
   for(; it!= masks_.end();)
   {
-    cv::Mat mask = *it;    
+    cv::Mat mask = *it;     
+    int num = numInlierInMask(mask,vo,img_L);
+    
+    if(num<inlier_tolerance_)
+    {
+      it++;
+    }
+    else
+    {
+      it = masks_.erase(it);
+    }
+    i++;
+  }
+}
+
+//count the number of inliers in a mask
+int UVDisparity::numInlierInMask(const cv::Mat& mask, const VisualOdometryStereo& vo,const cv::Mat& img_L)
+{
+   cv::Mat img_show,mask_show;
+   cvtColor(img_L, img_show, CV_GRAY2BGR);
+   cvtColor(mask, mask_show, CV_GRAY2BGR);
+  
+  int numInlier =  vo.quadmatches_inlier.size();
+
+  int N = 0;
+  
+  for(int i = 0; i< numInlier; i++)
+  {
+    int u = vo.quadmatches_inlier[i].u1c;
+    //int v = vo.p_matched_inlier[i].v1c;
+    short d = vo.quadmatches_inlier[i].dis_c;
+    int dis = cvRound(d/16.0f);
+    
+    int utense = mask.at<uchar>(dis,u);
+    if(dis > 0 && utense!=0)
+    {
+      N++;
+    }
+  }
+
+   // cv::imshow("inliershow",mask_show);
+   // cv::waitKey(0);
+  return N;
+  
+}
+
+
+//judge if two masks_ are overlapped
+bool UVDisparity::isOverlapped(const cv::Mat& mask1, const cv::Mat& mask2)
+{
+  cv::Mat result_and;//, result_or;
+
+  bitwise_and(mask1,mask2,result_and);
+  
+  if(isAllZero(result_and))
+  {
+    return false;
+  }
+  else
+  {
+    return true;
+  }
+ 
+}
+
+//judge if all the masks_ are separated
+bool UVDisparity::isMasksSeparate()
+{
+  int numMasks = masks_.size();
+  if(numMasks == 0) {return false;}
+  vector<cv::Mat>::iterator it1, it2;
+  
+  for(it1 = masks_.begin(); it1 != masks_.end(); it1++)
+  {
+    for(it2 = it1+1; it2 != masks_.end(); it2++)
+    {
+      cv::Mat mask1 = *it1;
+      cv::Mat mask2 = *it2;
+            
+      if(isOverlapped(mask1,mask2))
