@@ -610,4 +610,78 @@ void UVDisparity::findAllMasks(const VisualOdometryStereo &vo, const Mat &img_L,
 
     if(d > min_disparity_raw)
     {
-       int dis = cvRound
+       int dis = cvRound(d/16.0f);
+       cv::circle(ushow, cv::Point(u,dis),2,cv::Scalar(0,0,255),2,8,0);
+    }
+  }
+
+  //cv::imshow("udisparity",ushow);
+}
+
+
+//select the finally Confirmed detection results from 2 frame's candidates_
+void UVDisparity::confirmed()
+{
+  if(candidates_.size() == 0)
+  {
+    return;
+  }
+  else if(candidates_.size() == 1)
+  {
+    masks_confirmed_ = candidates_[0];
+  }
+  else if(candidates_.size() == 2)
+  {
+    vector<cv::Mat> cdt0 = candidates_[0];
+    vector<cv::Mat> cdt1 = candidates_[1];
+    cout<<"size of cdt0,cdt1: "<<cdt0.size()<<" "<<cdt1.size()<<endl;
+    
+    for(int i = 0; i < cdt1.size(); i++)
+    {
+      cv::Mat maski = cdt1[i];
+
+      for(int j = 0; j < cdt0.size(); j++)
+      {
+        cv::Mat maskj = cdt0[j];
+
+        int minRows = std::min(maski.rows, maskj.rows);
+        
+        if(minRows == maski.rows)
+        {
+          cv::Mat maskjj =  maskj( Range(0, minRows), Range(0, maskj.cols) );
+          
+          if(isOverlapped(maski,maskjj))
+         {
+           masks_confirmed_.push_back(maski);
+         }
+
+        }
+
+         if(minRows == maskj.rows)
+        {
+          cv::Mat maskii =  maski( Range(0, minRows), Range(0, maski.cols) );
+
+          if(isOverlapped(maskj,maskii))
+         {
+           masks_confirmed_.push_back(maski);
+         }
+
+        }   
+      }
+    }
+  }
+}
+
+
+
+/*
+  project the outliers in vo into the coordinates of udis
+ */
+void UVDisparity::verifyByInliers(const VisualOdometryStereo& vo, const cv::Mat& img_L)
+{
+  vector<cv::Mat>::iterator it = masks_.begin();
+  int i = 0;
+
+  for(; it!= masks_.end();)
+  {
+    cv::Mat mask = *it;    
