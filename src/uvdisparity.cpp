@@ -764,3 +764,81 @@ bool UVDisparity::isMasksSeparate()
       cv::Mat mask2 = *it2;
             
       if(isOverlapped(mask1,mask2))
+      {
+        return false;
+      }
+    }
+  }
+
+  return true;
+  
+}
+
+
+
+//merge two overlapped masks_
+void UVDisparity::mergeMasks()
+{
+   vector<cv::Mat>::iterator it1, it2;
+
+    for(it1 = masks_.begin(); it1 != masks_.end(); it1++)
+    {
+      for(it2 = it1+1; it2 != masks_.end(); )
+      {
+        cv::Mat mask1 = *it1;
+        cv::Mat mask2 = *it2;
+        cv::Mat mask_merge;
+        
+        if(isOverlapped(mask1,mask2))
+        {
+          bitwise_or(mask1,mask2,mask_merge);
+          *it1 = mask_merge;
+          it2 = masks_.erase(it2);
+        }
+        else
+        {
+          it2++;
+        }
+      }
+    }
+}
+
+//adjust udisparity intense by sigmoid function
+void UVDisparity::adjustUdisIntense(double scale, double range)
+{
+
+  for(int j = 0; j < u_dis_.rows; j++)
+  {   
+      uchar* u_ptr = u_dis_.ptr<uchar>(j);
+      int disparity = j;
+
+      double rate = sigmoid(disparity,scale,range,1);//0.02 -- 0.03之间比较好
+      //cout<<"the rate is: "<<rate<<endl;
+        
+      for(int i = 0; i < u_dis_.cols; i++)
+      {
+        int intense = u_ptr[i];
+        double intense_new = intense*1.0f * rate;
+        int intense_int = cvRound(intense_new);
+        
+          if(intense_int > 255)
+          {
+            u_ptr[i] = 255;
+          }
+          else
+          {
+            u_ptr[i] = intense_int;
+          }
+        }
+
+   }
+
+
+}
+
+
+
+//general processing function of UVDisparity based function
+cv::Mat UVDisparity::Process(cv::Mat& img_L, cv::Mat& disp_sgbm,
+                             VisualOdometryStereo& vo, cv::Mat& xyz,
+                             cv::Mat& ro
