@@ -841,4 +841,66 @@ void UVDisparity::adjustUdisIntense(double scale, double range)
 //general processing function of UVDisparity based function
 cv::Mat UVDisparity::Process(cv::Mat& img_L, cv::Mat& disp_sgbm,
                              VisualOdometryStereo& vo, cv::Mat& xyz,
-                             cv::Mat& ro
+                             cv::Mat& roi_mask, cv::Mat& ground_mask,
+                             double& pitch1, double& pitch2)
+{
+    cv::Mat mask_moving;
+    calVDisparity(disp_sgbm,xyz);
+
+    //sequentially estimate pitch angles by Kalman Filter
+    vector<cv::Mat> pitch_measures;
+
+    pitch_measures = Pitch_Classify(xyz,ground_mask);
+    pitch1_KF->predict();
+    pitch1_KF->correct(pitch_measures[0]);
+
+    pitch2_KF->predict();
+    pitch2_KF->correct(pitch_measures[1]);
+
+    pitch1 = pitch_measures[0].at<float>(0);
+    pitch2 = pitch_measures[1].at<float>(0);
+
+
+    //Improve 3D reconstruction results by pitch angles
+    correct3DPoints(xyz,roi_,pitch1_KF->statePost.at<float>(0),pitch2_KF->statePost.at<float>(0));
+
+    //set image ROI according to ROI3D (ROI within a 3D space)
+    setImageROI(xyz, roi_mask);
+
+    //filter inliers and outliers
+    filterInOut(img_L,roi_mask,disp_sgbm,vo,pitch1);
+
+    //calculate Udisparity image
+    calUDisparity(disp_sgbm,xyz,roi_mask,ground_mask);
+
+    //using sigmoid function to adjust Udisparity image for segmentation
+    double scale = 0.02, range = 32;
+    adjustUdisIntense(scale,range);
+
+     //Find all possible segmentation
+     findAllMasks(vo,img_L,xyz,roi_mask);
+
+    if(masks_.size()>0)
+    {
+       //merge overlapped masks
+       mergeMasks();
+
+       //improve the segments by inliers
+       verifyByInliers(vo,img_L);
+     }
+
+   //perform segmentation in disparity image
+   segmentation(disp_sgbm,img_L,roi_mask,mask_moving);
+
+   //demonstration
+   cv::Mat img_show;
+   img_L.copyTo(img_show,mask_moving);
+   //cv::imshow("moving",img_show);
+   //cv::waitKey(1);
+
+   masks_.clear();
+   return mask_moving;
+}
+
+
+void UVDisparity::segmentation(cons
