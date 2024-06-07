@@ -903,4 +903,82 @@ cv::Mat UVDisparity::Process(cv::Mat& img_L, cv::Mat& disp_sgbm,
 }
 
 
-void UVDisparity::segmentation(cons
+void UVDisparity::segmentation(const cv::Mat& disparity, const cv::Mat& img_L,
+                            cv::Mat& roi_mask, cv::Mat& mask_moving)
+{
+  cv::Mat img_show,img_show_last;
+  mask_moving = Mat::zeros(img_L.rows, img_L.cols, CV_8UC1);
+  cvtColor(img_L, img_show, CV_GRAY2BGR);
+
+  double eps = 1.5f;
+
+  int numMask = masks_.size();
+  if(numMask == 0)
+  {
+    //cout<<"DON'T FIND MOVING OBJECT"<<endl;
+    return;
+  }
+
+  cout<<"FIND MOVING OBJECT !!!"<<endl;
+  for(int m = 0; m < numMask; m++)
+  {
+
+    cv::Mat mask = masks_[m];
+
+    for(int i = 1; i < mask.rows; i++)
+    {
+      uchar* mask_ptr = mask.ptr<uchar>(i);
+
+      for(int j = 1; j < mask.cols; j++)
+      {
+        int intense = (int)mask_ptr[j];
+        //cout<<" "<<num_accu<<" ";
+
+        if( intense != 0 )
+        {
+
+          for(int k = 0; k < disparity.rows; k++)
+          {
+            short dis_raw = disparity.at<short>(k,j);
+            double dis_real = (dis_raw/16.0f);
+
+            if(abs(dis_real - i) < eps)
+            {
+              cv::Point pt(j,k);
+              if(isInMask(j,k,roi_mask))
+              {
+                mask_moving.at<uchar>(k,j)=255;
+              }
+            }
+          }
+        }
+      }
+    }
+
+
+
+  }
+
+  img_show.copyTo(img_show_last,mask_moving);
+}
+
+
+//judge if a mat is all zero or not
+bool UVDisparity::isAllZero(const cv::Mat& mat)
+{
+   for(int i = 0;i<mat.rows;i++)
+    {
+      const uchar* mat_ptr = mat.ptr<uchar>(i);
+
+      for(int j = 0; j<mat.cols; j++)
+      {
+        int d = mat_ptr[j];
+        if(d!=0) return false;
+      }
+
+    }
+
+   return true;
+}
+
+bool UVDisparity::isInMask(int u, int v, const cv::Mat& roi_mas
