@@ -101,4 +101,70 @@ vector<double> VisualOdometryStereo::estimateMotion (std::vector<pmatch> &quadma
     VisualOdometryStereo::result result = UPDATED;
     int iter=0;
     while (result==UPDATED) {
-      result = updateParameters(quadmatches,active,tr_delta_c
+      result = updateParameters(quadmatches,active,tr_delta_curr,1,1e-6);
+      if (iter++ > 20 || result==CONVERGED)
+        break;
+    }
+
+    // overwrite best parameters if we have more inliers
+    if (result!=FAILED) {
+      vector<int> inliers_curr = getInlier(quadmatches,tr_delta_curr);
+      if (inliers_curr.size()>inliers.size()) {
+        inliers = inliers_curr;
+        tr_delta = tr_delta_curr;
+      }
+    }
+  }
+
+  // final optimization (refinement)
+  if (inliers.size()>=6) {
+    int iter=0;
+    VisualOdometryStereo::result result = UPDATED;
+    while (result==UPDATED) {
+      result = updateParameters(quadmatches,inliers,tr_delta,1,1e-8);
+      if (iter++ > 100 || result==CONVERGED)
+        break;
+    }
+
+    // not converged
+    if (result!=CONVERGED)
+      success = false;
+
+  // not enough inliers
+  } else {
+    success = false;
+  }
+
+//  //allocate the inlier matches and outlier matches
+  getInOutMatches(quadmatches,inliers);
+
+
+  // release dynamic memory
+  delete X;delete Y;
+  delete Z;delete J;
+  delete p_predict;
+  delete p_observe;
+  delete p_residual;
+
+  // parameter estimate succeeded?
+  if (success) return tr_delta;
+  else         return vector<double>();
+}
+
+
+
+
+
+vector<int> VisualOdometryStereo::getInlier(std::vector<pmatch>& quadmatches,vector<double> &tr) {
+
+  // mark all observations active
+  vector<int> active;
+  for (int i=0; i<(int)quadmatches.size(); i++)
+    active.push_back(i);
+
+  // extract observations and compute predictions
+  computeObservations(quadmatches,active);
+  computeResidualsAndJacobian(tr,active);
+
+  // compute inliers
+  vector<int> inl
