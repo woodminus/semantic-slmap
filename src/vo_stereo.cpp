@@ -167,4 +167,64 @@ vector<int> VisualOdometryStereo::getInlier(std::vector<pmatch>& quadmatches,vec
   computeResidualsAndJacobian(tr,active);
 
   // compute inliers
-  vector<int> inl
+  vector<int> inliers;
+  for (int i=0; i<(int)quadmatches.size(); i++)
+    if (pow(p_observe[4*i+0]-p_predict[4*i+0],2)+pow(p_observe[4*i+1]-p_predict[4*i+1],2) +
+        pow(p_observe[4*i+2]-p_predict[4*i+2],2)+pow(p_observe[4*i+3]-p_predict[4*i+3],2) < param.inlier_threshold*param.inlier_threshold)
+      inliers.push_back(i);
+  return inliers;
+}
+
+
+
+
+void VisualOdometryStereo::getInOutMatches(std::vector<pmatch>& quadmatches, vector<int>& inliers)
+{
+  int numMatched = quadmatches.size();
+
+  quadmatches_inlier.clear();
+  quadmatches_outlier.clear();
+
+  for(int i = 0; i < numMatched; i++)
+  {
+    if(std::find(inliers.begin(),inliers.end(),i)!=inliers.end())
+    {
+      quadmatches_inlier.push_back(quadmatches[i]);
+    }
+    else
+    {
+      quadmatches_outlier.push_back(quadmatches[i]);
+    }
+
+  }
+
+}
+
+VisualOdometryStereo::result VisualOdometryStereo::updateParameters(std::vector<pmatch>& quadmatches,vector<int> &active,
+                                                                       vector<double> &tr,double step_size,double eps)
+{
+
+  // we need at least 3 observations
+  if (active.size()<3)
+    return FAILED;
+
+  // extract observations and compute predictions
+  computeObservations(quadmatches,active);
+  computeResidualsAndJacobian(tr,active);
+
+  // init, solve linear function A*X = B
+  cv::Mat A(6,6,CV_64F);
+  cv::Mat B(6,1,CV_64F);
+  cv::Mat X(6,1,CV_64F);
+
+  // fill matrices A and B
+  for (int m=0; m<6; m++) {
+    for (int n=0; n<6; n++) {
+      double a = 0;
+      for (int i=0; i<4*(int)active.size(); i++) {
+        a += J[i*6+m]*J[i*6+n];
+      }
+      A.at<double>(m,n)=a;
+    }
+    double b = 0;
+    for (int i=0; i<4
