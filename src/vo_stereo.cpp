@@ -227,4 +227,62 @@ VisualOdometryStereo::result VisualOdometryStereo::updateParameters(std::vector<
       A.at<double>(m,n)=a;
     }
     double b = 0;
-    for (int i=0; i<4
+    for (int i=0; i<4*(int)active.size(); i++) {
+      b += J[i*6+m]*(p_residual[i]);
+    }
+    B.at<double>(m,0)=b;
+  }
+
+  // perform elimination
+  if(cv::solve(A,B,X,DECOMP_LU)) //solve the linear system A*X=B
+  {
+      bool converged = true;
+      for(int m = 0; m<6; m++)
+      {
+          tr[m] += step_size*X.at<double>(m,0);
+          if(fabs(X.at<double>(m,0))>eps)
+              converged = false;
+      }
+      if(converged)
+          return CONVERGED;
+      else
+          return UPDATED;
+
+  }
+  else
+  {
+      return FAILED;
+  }
+
+}
+
+
+
+void VisualOdometryStereo::computeObservations(std::vector<pmatch>& quadmatches,vector<int> &active) {
+
+  // set all observations
+  for (int i=0; i<(int)active.size(); i++) {
+    p_observe[4*i+0] = quadmatches[active[i]].u1c; // u1
+    p_observe[4*i+1] = quadmatches[active[i]].v1c; // v1
+    p_observe[4*i+2] = quadmatches[active[i]].u2c; // u2
+    p_observe[4*i+3] = quadmatches[active[i]].v2c; // v2
+  }
+}
+
+
+
+
+void VisualOdometryStereo::computeResidualsAndJacobian(vector<double> &tr,vector<int> &active) {
+
+  // extract motion parameters
+  double rx = tr[0]; double ry = tr[1]; double rz = tr[2];
+  double tx = tr[3]; double ty = tr[4]; double tz = tr[5];
+
+  // precompute sine/cosine
+  double sx = sin(rx); double cx = cos(rx); double sy = sin(ry);
+  double cy = cos(ry); double sz = sin(rz); double cz = cos(rz);
+
+  // compute rotation matrix and derivatives
+  double r00    = +cy*cz;          double r01    = -cy*sz;          double r02    = +sy;
+  double r10    = +sx*sy*cz+cx*sz; double r11    = -sx*sy*sz+cx*cz; double r12    = -sx*cy;
+  double r20    = -cx*sy*cz+sx*sz
