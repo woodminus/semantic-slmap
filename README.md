@@ -1,0 +1,7 @@
+# Semantic Segmentation with SLAM\nThis project, maintained by woodminus, is about semantic mapping.\n\n## Results\n![result1](https://github.com/woodminus/semantic-slmap/blob/master/001.png)\n![result2](https://github.com/woodminus/semantic-slmap/blob/master/000000.png)\n![result3](https://github.com/woodminus/semantic-slmap/blob/master/2.png)\n![result4](https://github.com/woodminus/semantic-slmap/blob/master/3.png)\n![result5](https://github.com/woodminus/semantic-slmap/blob/master/0002.png)\n![result6](https://github.com/woodminus/semantic-slmap/blob/master/0002.jpg)\n\n## Models\nThe models are not included in this repo. You can modify `segnet.cpp` as follows:\n\n```
+//segnet.cpp
+std::string model_file = "../models/segnet_model_driving_webdemo.prototxt";
+std::string trained_file = "../models/segnet_weights_driving_webdemo.caffemodel";
+std::string label_file = "../models/semantic12.txt";
+```
+\nThe semantic segmentation method is based on [Alex Kendall's work](https://github.com/woodminus/caffe-segnet). The modified version of **Caffe** supports the **SegNet** architecture.\nThe mapping architecture is based on GaoXiang's work and **ORB-SLAM**.\n\n## Getting Started\nIf you wish to try this project, you should first satisfy several requirements:\n\n- OpenCV (version 2.4.x, not compatible with 3.0)\n- Eigen (version 3.0 or later)\n- PCL (version 1.7)\n- DBoW2 (for loop closure)\n- g2o (for solving PnP)
