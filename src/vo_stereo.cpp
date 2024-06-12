@@ -285,4 +285,44 @@ void VisualOdometryStereo::computeResidualsAndJacobian(vector<double> &tr,vector
   // compute rotation matrix and derivatives
   double r00    = +cy*cz;          double r01    = -cy*sz;          double r02    = +sy;
   double r10    = +sx*sy*cz+cx*sz; double r11    = -sx*sy*sz+cx*cz; double r12    = -sx*cy;
-  double r20    = -cx*sy*cz+sx*sz
+  double r20    = -cx*sy*cz+sx*sz; double r21    = +cx*sy*sz+sx*cz; double r22    = +cx*cy;
+  double rdrx10 = +cx*sy*cz-sx*sz; double rdrx11 = -cx*sy*sz-sx*sz; double rdrx12 = -cx*cy;
+  double rdrx20 = +sx*sy*cz+cx*sz; double rdrx21 = -sx*sy*sz+cx*cz; double rdrx22 = -sx*cy;
+  double rdry00 = -sy*cz;          double rdry01 = +sy*sz;          double rdry02 = +cy;
+  double rdry10 = +sx*cy*cz;       double rdry11 = -sx*cy*sz;       double rdry12 = +sx*sy;
+  double rdry20 = -cx*cy*cz;       double rdry21 = +cx*cy*sz;       double rdry22 = -cx*sy;
+  double rdrz00 = -cy*sz;          double rdrz01 = -cy*cz;
+  double rdrz10 = -sx*sy*sz+cx*cz; double rdrz11 = -sx*sy*cz-cx*sz;
+  double rdrz20 = +cx*sy*sz+sx*cz; double rdrz21 = +cx*sy*cz-sx*sz;
+
+  // loop variables
+  double X1p,Y1p,Z1p;
+  double X1c,Y1c,Z1c,X2c;
+  double X1cd,Y1cd,Z1cd;
+
+  // for all observations do
+  for (int i=0; i<(int)active.size(); i++) {
+
+    // get 3d point in previous coordinate system
+    X1p = X[active[i]];
+    Y1p = Y[active[i]];
+    Z1p = Z[active[i]];
+
+    // compute 3d point in current left coordinate system
+    X1c = r00*X1p+r01*Y1p+r02*Z1p+tx;
+    Y1c = r10*X1p+r11*Y1p+r12*Z1p+ty;
+    Z1c = r20*X1p+r21*Y1p+r22*Z1p+tz;
+    
+    // weighting
+    double weight = 1.0;
+    if (param.reweighting)
+      weight = 1.0/(fabs(p_observe[4*i+0]-param.calib.cu)/fabs(param.calib.cu) + 0.05);
+    
+    // compute 3d point in current right coordinate system
+    X2c = X1c-param.base;
+
+    // for all paramters do
+    for (int j=0; j<6; j++) {
+
+      // derivatives of 3d pt. in curr. left coordinates wrt. param j
+ 
