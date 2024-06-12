@@ -325,4 +325,37 @@ void VisualOdometryStereo::computeResidualsAndJacobian(vector<double> &tr,vector
     for (int j=0; j<6; j++) {
 
       // derivatives of 3d pt. in curr. left coordinates wrt. param j
- 
+      switch (j) {
+        case 0: X1cd = 0;
+                Y1cd = rdrx10*X1p+rdrx11*Y1p+rdrx12*Z1p;
+                Z1cd = rdrx20*X1p+rdrx21*Y1p+rdrx22*Z1p;
+                break;
+        case 1: X1cd = rdry00*X1p+rdry01*Y1p+rdry02*Z1p;
+                Y1cd = rdry10*X1p+rdry11*Y1p+rdry12*Z1p;
+                Z1cd = rdry20*X1p+rdry21*Y1p+rdry22*Z1p;
+                break;
+        case 2: X1cd = rdrz00*X1p+rdrz01*Y1p;
+                Y1cd = rdrz10*X1p+rdrz11*Y1p;
+                Z1cd = rdrz20*X1p+rdrz21*Y1p;
+                break;
+        case 3: X1cd = 1; Y1cd = 0; Z1cd = 0; break;
+        case 4: X1cd = 0; Y1cd = 1; Z1cd = 0; break;
+        case 5: X1cd = 0; Y1cd = 0; Z1cd = 1; break;
+      }
+
+      // set jacobian entries (project via K)
+      J[(4*i+0)*6+j] = weight*param.calib.f*(X1cd*Z1c-X1c*Z1cd)/(Z1c*Z1c); // left u'
+      J[(4*i+1)*6+j] = weight*param.calib.f*(Y1cd*Z1c-Y1c*Z1cd)/(Z1c*Z1c); // left v'
+      J[(4*i+2)*6+j] = weight*param.calib.f*(X1cd*Z1c-X2c*Z1cd)/(Z1c*Z1c); // right u'
+      J[(4*i+3)*6+j] = weight*param.calib.f*(Y1cd*Z1c-Y1c*Z1cd)/(Z1c*Z1c); // right v'
+    }
+
+    // set prediction (project via K)
+    p_predict[4*i+0] = param.calib.f*X1c/Z1c+param.calib.cu; // left u
+    p_predict[4*i+1] = param.calib.f*Y1c/Z1c+param.calib.cv; // left v
+    p_predict[4*i+2] = param.calib.f*X2c/Z1c+param.calib.cu; // right u
+    p_predict[4*i+3] = param.calib.f*Y1c/Z1c+param.calib.cv; // right v
+    
+    // set residuals
+    p_residual[4*i+0] = weight*(p_observe[4*i+0]-p_predict[4*i+0]);
+    p_residual[4*i+1] = weight*(p_observe[4*i+1]-p_pre
